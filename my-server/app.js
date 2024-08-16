@@ -1,31 +1,50 @@
 const http = require('http')
+const fs= require('fs');
 
 const server =http.createServer((req,res)=>{
-    console.log(req.url,req.headers,req.method);
+  
     res.setHeader('Content-Type','text/html');
     const url=req.url;
-    if(url ==='/home')
+    const method=req.method;
+    if(url ==='/')
     {
-        res.write('<html>');
-        res.write('<head><title>My First Page</title></head>');
-        res.write('<body><h1>Welcome home</h1></body>');
-        res.write('</html>');
-    }else if(url ==='/about')
-        {
-            res.write('<html>');
-            res.write('<head><title>My First Page</title></head>');
-            res.write('<body><h1>Welcome to About Us page</h1></body>');
-            res.write('</html>');
-        }else if(url ==='/node')
+        fs.readFile('message.txt',(err,data)=>{
+            if(err)
             {
-                res.write('<html>');
-                res.write('<head><title>My First Page</title></head>');
-                res.write('<body><h1>Welcome to my Node Js project</h1></body>');
-                res.write('</html>');
+                console.log(err);
+            }
+            res.write('<html>');
+            res.write('<head><title>Enter message</title></head>');
+    
+            res.write(`<body> ${data}<br> <form action="/message" method="POST"><input type="text" name="message"><button type="submit">Send</button></form></body>`);
+            res.write('</html>');
+            res.end();
+        });
+       
+    }
+    if(url ==='/message' && req.method === 'POST')
+    {
+        const body=[];
+       req.on('data',(chunk)=>{
+        body.push(chunk);
+       });
+       req.on('end',()=>{
+        const parsedBody =Buffer.concat(body).toString();
+        console.log(parsedBody);
+        const message=parsedBody.split('=')[1];
+        fs.writeFile('message.txt', message,err=>{
+
+            res.statusCode=302;
+        res.setHeader('Location','/');
+        return res.end();
+
+        });
         
-            } 
-   
-    res.end();
+       });
+      
+    
+    }
 });
 
 server.listen(4000);
+
